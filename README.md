@@ -24,3 +24,21 @@ o = open
 x = closed
 / = partial open
 ' = close bell with knee
+
+## Development Notes
+
+The instrument select requires that a channel already be selected, eg; by playing a note.
+
+The MIDI chip keeps a memory of all of the commands, so if it's not doing what you think, it may be time to reset the chip and get back to a "fresh" state.
+
+## References
+
+[Music Maker Featherwing Tutorial](https://learn.adafruit.com/adafruit-music-maker-featherwing/)
+[VS1053b Datasheet](http://www.vlsi.fi/fileadmin/datasheets/vs1053.pdf)
+
+[adafruit_midi @ github](https://github.com/adafruit/Adafruit_CircuitPython_MIDI)
+[adafruit_midi @ readthedocs](https://circuitpython.readthedocs.io/projects/midi/en/latest/index.html)
+[adafruit_midi example](https://learn.adafruit.com/adafruit-midi-featherwing/circuitpython-midi-example)
+
+[Sparkfun MIDI tutorial](https://learn.sparkfun.com/tutorials/midi-tutorial/all)
+[CMU MIDI tutorial](https://www.cs.cmu.edu/~music/cmsip/readings/MIDI%20tutorial%20for%20programmers.html)
