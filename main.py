@@ -1,17 +1,30 @@
-# SPDX-FileCopyrightText: 2021 John Park for Adafruit Industries
-# SPDX-License-Identifier: MIT
-# midi_UARToutdemo.py - demonstrates sending MIDI notes
 
 import time
 import board
 import busio
 import digitalio
+import adafruit_lps2x
+
+i2c = busio.I2C(board.SCL, board.SDA)
+lps = adafruit_lps2x.LPS22(i2c)
+
+# Capture ambient pressure on startup
+avg_pressure = []
+for ii in range(10):
+    avg_pressure.append(lps.pressure)
+    time.sleep(0.1)
+avg_pressure = sum(avg_pressure)/10
+print(avg_pressure)
+
+# # Debug: Print pressure values for plotting
+# while True:
+#     print((lps.pressure - avg_pressure,))
+#     time.sleep(0.05)
 
 import adafruit_midi
-
-from adafruit_midi.control_change import ControlChange
-from adafruit_midi.note_off import NoteOff
 from adafruit_midi.note_on import NoteOn
+from adafruit_midi.note_off import NoteOff
+from adafruit_midi.control_change import ControlChange
 
 uart = busio.UART(board.TX, board.RX, baudrate=31250, timeout=0.001)  # init UART
 midi = adafruit_midi.MIDI(
@@ -21,8 +34,6 @@ midi = adafruit_midi.MIDI(
     out_channel=0,
     debug=False,
 )
-note_hold = 0.85
-rest = note_hold / 5
 
 print("MIDI Out demo")
 print("Default output channel:", midi.out_channel)
@@ -75,21 +86,8 @@ notes_soprano = {
 notes = notes_soprano
 
 
-from adafruit_midi.midi_message import MIDIMessage, note_parser
-class InstrumentSelct(MIDIMessage):
-    """Instrument Select MIDI message
-    NOTE: This requires a channel to have already been selected.
-    There are three ways to select an instrument:
-        - 0xB0 - 0x00 - 0x05 (MSB sound bank selection)
-        - 0xB0 - 0x20 - 0x01 (LSB sound bank selection)
-        - 0xC0 - 0x02 (sound selection in the current sound bank)
-        (https://www.cs.cmu.edu/~music/cmsip/readings/MIDI%20tutorial%20for%20programmers.html)
-    This uses the last method:
-        - channel message: 0x80 note off, 0x90 note on, **0xc0 program**, 0xe0 pitch wheel
-        (http://www.vlsi.fi/fileadmin/datasheets/vs1053.pdf)
-    TODO: Generalize this so we don't have to play a note first.
-    :param int instrument: The instrument to select - see lookup table.
-    """
+from adafruit_midi.midi_message import MIDIMessage
+class InstrumentSelect(MIDIMessage):
 
     _STATUS = 0xC0
     _STATUSMASK = 0xF0
@@ -133,35 +131,92 @@ def fingering(keys):
             str += "|o"
     return str
 
+
+class PressureButton():
+
+    def __init__(self, sensor, ambient, threshold, down_on_increase=True) -> None:
+        self._sensor = sensor
+        self._ambient = ambient
+        self._threshold = threshold
+        self._last_state = False
+        self._current_state = False
+        self._thresh_pos = down_on_increase
+
+    def poll(self):
+        self._last_state = self._current_state
+        delta = self._sensor.pressure - self._ambient
+        if self._thresh_pos:
+            # Positive pressure is a button press
+            self._current_state = delta > self._threshold
+        else:
+            # Negative pressure is a button press
+            self._current_state = delta < self._threshold
+        self._delta = delta
+
+    @property
+    def rising(self):
+        if (not self._last_state) and (self._current_state):
+            return True
+        return False
+
+    @property
+    def falling(self):
+        if (self._last_state) and (not self._current_state):
+            return True
+        return False
+
+    @property
+    def pressed(self):
+        return self._current_state
+
+    @property
+    def delta(self):
+        return self._delta
+
+
+button = PressureButton(lps, avg_pressure, 1.5)
+
+print("selecting instrument")
+# Pipe:
+# 73 Piccolo
+# 74 Flute
+# 75 Recorder
+# 76 Pan Flute
+# 77 Blown Bottle
+# 78 Shakuhachi
+# 79 Whistle
+# 80 Ocarina
+midi.send(InstrumentSelect(79))
+midi.send(ControlChange(7, 127))
+
 old_v = 0
 old_note = 0
-
-# Play a note first, to select the channel
-midi.send(NoteOn(40, 80))
-time.sleep(0.5)
-midi.send(NoteOff(40, 80))
-# Now we can use the instrument select
-midi.send(InstrumentSelct(75)) # Select recorder
-
 while True:
+    button.poll()
+    print((button.delta, ))
+
     # Poll the new value
     new_v = poll(keys)
-    # Debug: print the fingering
-    # print("%4s" % new_v, fingering(keys))
-    # On a note change play the new note
-    if not (new_v == old_v):
-        # Turn off the old note
-        print("turning off...")
-        midi.send(NoteOff(old_note, 0))
-        # Turn on the new note
-        try:
-            new_note = notes[new_v]
+    new_note = notes.get(new_v, None)
+    if new_note is None:
+        continue
+
+    if button.rising:
+        # Starting a note
+        print("Rising")
+        midi.send(NoteOn(new_note))
+    elif button.falling:
+        # Ending a note
+        print("Falling")
+        midi.send(NoteOff(old_note))
+    if button.pressed:
+        # See if we've changed fingerings while blowing
+        if not (new_v == old_v):
+            print("Switching notes")
             print("%4s" % new_v, new_note, fingering(keys))
-            midi.send(NoteOn(new_note, 80))
-        except KeyError as ex:
-            new_note = 0
-            print("Fingering not found!")
-        # store the new notes as the old notes
-        old_v = new_v
-        old_note = new_note
-    # time.sleep(0.1)
+            # Swap the active note
+            midi.send(NoteOff(old_note))
+            midi.send(NoteOn(new_note))
+    # store the new notes as the old notes
+    old_v = new_v
+    old_note = new_note

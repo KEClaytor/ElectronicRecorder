@@ -1,11 +1,10 @@
 # ElectronicRecorder
 Code for the electronic recorder project
 
-
 ## Key Table
 
-[Fingering Chart](http://www.prescottworkshop.com/bar_finger_c.pdf)
-[MIDI Notes](https://newt.phys.unsw.edu.au/jw/notes.html)
+- [Fingering Chart](http://www.prescottworkshop.com/bar_finger_c.pdf)
+- [MIDI Notes](https://newt.phys.unsw.edu.au/jw/notes.html)
 
 | Key of C  | C | C#| D | Eb| E | F | F#| G | G#| A | Bb| B | C | C#| D | Eb| E | F | F#| G | G#| A | Bb| B | C | C#| D |
 |-----------|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -33,12 +32,18 @@ The MIDI chip keeps a memory of all of the commands, so if it's not doing what y
 
 ## References
 
-[Music Maker Featherwing Tutorial](https://learn.adafruit.com/adafruit-music-maker-featherwing/)
-[VS1053b Datasheet](http://www.vlsi.fi/fileadmin/datasheets/vs1053.pdf)
+Music Maker
+- [Music Maker Featherwing Tutorial](https://learn.adafruit.com/adafruit-music-maker-featherwing/)
+- [VS1053b Datasheet](http://www.vlsi.fi/fileadmin/datasheets/vs1053.pdf)
 
-[adafruit_midi @ github](https://github.com/adafruit/Adafruit_CircuitPython_MIDI)
-[adafruit_midi @ readthedocs](https://circuitpython.readthedocs.io/projects/midi/en/latest/index.html)
-[adafruit_midi example](https://learn.adafruit.com/adafruit-midi-featherwing/circuitpython-midi-example)
+Adafruit VS1053
+- [vs1053 @ readthedocs](https://docs.circuitpython.org/projects/vs1053/en/latest/index.html)
 
-[Sparkfun MIDI tutorial](https://learn.sparkfun.com/tutorials/midi-tutorial/all)
-[CMU MIDI tutorial](https://www.cs.cmu.edu/~music/cmsip/readings/MIDI%20tutorial%20for%20programmers.html)
+Adafruit MIDI
+- [adafruit_midi @ github](https://github.com/adafruit/Adafruit_CircuitPython_MIDI)
+- [adafruit_midi @ readthedocs](https://circuitpython.readthedocs.io/projects/midi/en/latest/index.html)
+- [adafruit_midi example](https://learn.adafruit.com/adafruit-midi-featherwing/circuitpython-midi-example)
+
+Other MIDI
+- [Sparkfun MIDI tutorial](https://learn.sparkfun.com/tutorials/midi-tutorial/all)
+- [CMU MIDI tutorial](https://www.cs.cmu.edu/~music/cmsip/readings/MIDI%20tutorial%20for%20programmers.html)
